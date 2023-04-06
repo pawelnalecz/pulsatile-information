@@ -1,0 +1,7 @@
+./_analysis_cache
+./data
+./figures
+
+./code/df_playground.ipynb
+**/__pycache__
+**/.vscode
