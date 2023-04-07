@@ -3,7 +3,9 @@
 
 ./_analysis_cache
 ./data
-./figures
+data
+_analysis_cache
+
 
 ./code/core/local_config.py
 ./code/figures/local_config.py
