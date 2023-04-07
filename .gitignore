@@ -1,7 +1,11 @@
+**/__pycache__
+**/.vscode
+
 ./_analysis_cache
 ./data
 ./figures
 
-./code/df_playground.ipynb
-**/__pycache__
-**/.vscode
+./code/core/local_config.py
+./code/figures/local_config.py
+code/core/local_config.py
+code/figures/local_config.py
