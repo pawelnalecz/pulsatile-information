@@ -4,7 +4,7 @@ from pathlib import Path
 # If DATA_SOURCE == 'INTERNAL, full data package as originally used in our lab will be loaded
 DATA_SOURCE = 'EXTERNAL'
 
-root_working_directory =  Path('C:/Users/pawna/Documents/Projekty/Bern/code') # path to the root folder of the downloaded package. You can specify any other directory on your computer. Can be pathlib.path or str
+root_working_directory =  Path(__file__).parent.parent.parent # path to the root folder of the downloaded package. You can specify any other directory on your computer. Can be pathlib.path or str
 
 full_data_directory =  root_working_directory / 'data' / 'mapk-info-rate-data'
 images_root_directory = root_working_directory / 'data' / 'mapk-info-rate-extra-images'
