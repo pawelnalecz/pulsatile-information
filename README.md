@@ -3,7 +3,7 @@ at IPPT PAN and contains scripts used for creation of figures
 used in "The MAPK/ERK channel capacity exceeds 6 bit/hour" 
 by Paweł Nałęcz-Jawecki et al., 2023.
 
-Available under CC BY-SA 4.0 Creative Commons Licence (Attribution-ShareAlike 4.0 International).
+Available under BSD-3 licence.
 
 
 
