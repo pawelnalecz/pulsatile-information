@@ -5,8 +5,6 @@ by Paweł Nałęcz-Jawecki et al., 2023.
 
 Available under BSD-3 licence.
 
-
-
 Quick usage guide:
 
 => To create a figure, run the proper script from 'code/figures' directory.
@@ -17,11 +15,8 @@ next to which you found this readMe, and type 'python figures/fig1B.py'.
 'code/figures/local_config.py'.
 
 => The figures need data. The scripts can use either of the two data sets:
-
-    * EXTERNAL: Compact package published on Zenodo: 
-https://doi.org/10.5281/zenodo.7808385 (default) (724MB)
-
-    * INTERNAL: Full data set used originally in our lab to create the figures https://pmbm.ippt.pan.pl/data/mapk-info-rate-data.zip (8.5GB)
+* EXTERNAL: Compact package published on Zenodo: https://doi.org/10.5281/zenodo.7808385 (default) (724MB)
+* INTERNAL: Full data set used originally in our lab to create the figures https://pmbm.ippt.pan.pl/data/mapk-info-rate-data.zip (8.5GB)
     
    Data source can be specified in 'code/core/local_config.py'. 
 The proper package will be downloaded automatically to your 
@@ -40,5 +35,4 @@ https://pmbm.ippt.pan.pl/data/mapk-info-rate-extra-images.zip (108MB)
 
 => The scripts cache partial results in '_analysis_cache' folder 
 which will make a rerun (significantly) faster.
-
 
