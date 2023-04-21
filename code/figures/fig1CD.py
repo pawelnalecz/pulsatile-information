@@ -10,7 +10,6 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 from utils.utils import draw_contour_gen, show_cell_in_image_gen
 from core import experiment_manager, factory
-from core.steps import get_timeline
 from core.local_config import full_data_directory, images_root_directory, external_data_directory, DATA_SOURCE
 from figures.local_config import figure_output_path
 from integrity import check_and_fetch
