@@ -21,11 +21,11 @@ images_root_directory = Path(images_root_directory).absolute()
 
 
 full_data_package_url = 'https://pmbm.ippt.pan.pl/data/mapk-info-rate-data.zip'
-full_data_package_name = 'mapk-info-rate-data'
+full_data_package_name = 'full_data'
 full_data_package_size = '8.5GB'
-exportable_package_url = 'https://zenodo.org/record/7808385/files/Nalecz-Jawecki_et_al--Source_Data.zip?download=1'
+exportable_package_url = 'https://zenodo.org/record/7472959/files/Nalecz-Jawecki_et_al-Source_Data.zip?download=1'
 exportable_package_name = 'Nalecz-Jawecki_et_al--Source_Data'
-exportable_package_size = '724MB'
+exportable_package_size = '664MB'
 extra_images_url = 'https://pmbm.ippt.pan.pl/data/mapk-info-rate-extra-images.zip'
 extra_images_name = 'mapk-info-rate-extra-images'
 extra_images_size = '108MB'

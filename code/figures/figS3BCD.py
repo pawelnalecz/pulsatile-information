@@ -3,93 +3,57 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from pathlib import Path
-import re
 
 sys.path.append(str(Path(__file__).parent.parent))
 
 from core import experiment_manager, factory
-from core.steps import computing_information_transmission_full_3bit_matrix, computing_information_transmission, get_timeline
+from core.steps import MI_from_CM_grouped
 
 from figures.local_config import figure_output_path
 from figures.figure_settings import *
 from integrity import check_and_fetch
-from utils.math_utils import input_entropy
 
 check_and_fetch.check_and_fetch_necessary()
 
-output_path = Path(figure_output_path).absolute() / "figS3/automatic/"
+output_path = Path(figure_output_path).absolute() / "figS3"
 output_path.mkdir(parents=True, exist_ok=True)
 
-
-onGoodTracks = False
-yesno = False
-with_voting = True
+learning = True
 
 
-
-for group_it,(title, figletter, xaxis, settings, experiments, additional_parameters) in enumerate((
+for group_it,(title, figletter, xaxis, regular, onOtherDataSet, experiments, additional_parameters) in enumerate((
     
-    ('Binary encoding', 'B', 'minutes_per_timepoint', {'regular': True, 'onOtherDataSet': False, 'yesno': True, 'remove_first_pulses': 0},
+    ('Binary encoding', 'B', 'minutes_per_timepoint', True, False,
         experiment_manager.chosen_experiments_pseudorandom,
     {},
     ),
-    ('Interval encoding', 'C',  'empirical input period [minutes]' , {'regular': False, 'onOtherDataSet': False, 'yesno': False,},
+    ('Interval encoding', 'C',  'empirical input period [minutes]' , False, False,
         experiment_manager.chosen_experiments_interval,
     {},
     ),
-    ('Interval encoding with a minimal gap', 'D', 'min', {'regular': False, 'onOtherDataSet': False, 'yesno': False},
+    ('Interval encoding with a minimal gap', 'D', 'min', False, False,
         experiment_manager.chosen_experiments_interval_with_gap,
     {},
     ),
 
-)): 
-
-    if 'regular' in settings.keys():
-        regular = settings['regular']
-    if 'onOtherDataSet' in settings.keys():
-        onOtherDataSet = settings['onOtherDataSet']
-    if 'removeFirstPulses' in settings.keys():
-        removeFirstPulses = settings['removeFirstPulses']
-    if 'yesno' in settings.keys():
-        yesno = settings['yesno']
-
-    outputs = {}
-    outputs_aux = {}
-
+)):
     
-    for it_experiment, experiment in enumerate(experiments):
-
-        print('.............. STARTING ' + experiment + '................') 
-
-
-        theoretical_min = experiment_manager.theoretical_parameters[experiment]['min']
-        theoretical_exp_mean = experiment_manager.theoretical_parameters[experiment]['exp_mean']
-        theoretical_mean = theoretical_min + theoretical_exp_mean
-        minutes_per_timepoint = experiment_manager.theoretical_parameters[experiment]['minutes_per_timepoint']
-        
-        theoretical_input_frequency : float= 1/theoretical_mean
-        theoretical_input_entropy : float = input_entropy(theoretical_min, theoretical_exp_mean)
-        theoretical_input_entropy_assuming_poisson : float = input_entropy(0, 1/theoretical_input_frequency)
-
-
-        parameters = {
+    def get_parameters(experiment, regular, **kwargs):
+        return {
             **experiment_manager.default_parameters,
             **experiment_manager.experiments[experiment],
             'theoretical_parameters': experiment_manager.theoretical_parameters[experiment],
-            'train_on': 'other_tracks' if not onOtherDataSet else 'same',
-            'trim_end': (-1, int(np.floor(experiment_manager.theoretical_parameters[experiment]['min'] + experiment_manager.theoretical_parameters[experiment]['exp_mean']))),
-            'timeline_extraction_method' : 'normal' if (not with_voting or yesno ) else 'subsequent',
-    
-
+            'trim_end': experiment_manager.trim_end(experiment),
+            'fields_reduced_with_confusion_matrix': ['time_point'],
+            'fields_for_mi_computation_grouping': ['track_id'],
+            'correct_consecutive': 2,
 
             **({
-                'remove_first_pulses': 0,
-                'remove_break': 0,
                 'correct_consecutive': 0,
-                'remove_shorter_than': 0,
-                'yesno': True,
                 'n_pulses': 19,
-                'pulse_length': minutes_per_timepoint,
+                'pulse_length': experiment_manager.theoretical_parameters[experiment]['minutes_per_timepoint'],
+                'train_on_other_experiment': onOtherDataSet,
+                'r_slice_length': 1,
 
             } if regular else {}),
             
@@ -97,79 +61,92 @@ for group_it,(title, figletter, xaxis, settings, experiments, additional_paramet
                 ('', 'index', 'lt', 500),
             ],
 
-
-            **additional_parameters,
+            **kwargs,
         }
+    
 
-        if regular and onOtherDataSet:
-            pos_text = re.search('pos[0-9]+_', experiment).group(0)
-            pos = int(pos_text[3:-1])
-            complementary_pos_text = f'pos{11-pos:02d}_'
-        
-        if onOtherDataSet:
-            parameters1 = {**parameters, **experiment_manager.experiments['min20_optmeanb' if not regular else experiment.replace(pos_text, complementary_pos_text)] , 'good_track_offset': 0.85}
-        else:
-            parameters1=parameters
+    additional_preselection = [
+        ('', 'index', 'lt', 500),
+        ('std_dQ2', 'rank', 'gt', 0.2),
+    ]
 
-        chain = (
-                (factory.do_the_analysis(parameters, parameters1, regular, onOtherDataSet, onGoodTracks, yesno).step(get_timeline)
-                if not yesno or not with_voting else factory.get_voting_timeline(parameters, parameters1, regular, onOtherDataSet, onGoodTracks, yesno)
-            ).step(computing_information_transmission_full_3bit_matrix)
-            if not regular else
-            #factory.do_the_analysis(parameters, parameters1, regular, onOtherDataSet, onGoodTracks, yesno).step(get_timeline).step(computing_information_transmission)
-            factory.get_voting_timeline(parameters, parameters1, regular, onOtherDataSet, onGoodTracks, yesno).step(computing_information_transmission)
-        )
+    chains = {
+        experiment: factory.compute_information_transmission(regular, learning)(
+            parameters=get_parameters(experiment, regular), 
+            parameters1=get_parameters(experiment_manager.get_complementary_experiment(experiment), regular) if onOtherDataSet else None
+            ).step(MI_from_CM_grouped) for experiment in experiments
+    }
 
-        additional_preselection = [
-                ('', 'index', 'lt', 500),
-                ('std_dQ2', 'rank', 'gt', 0.2),
-            ]
+    chains_with_preselection = {
+        experiment: factory.compute_information_transmission(regular, learning)(
+            parameters=get_parameters(experiment, regular, vivid_track_criteria=additional_preselection), 
+            parameters1=get_parameters(experiment_manager.get_complementary_experiment(experiment), regular, vivid_track_criteria=additional_preselection) if onOtherDataSet else None
+            ).step(MI_from_CM_grouped) for experiment in experiments
+    }
 
 
-        chain2 = (
-                (factory.do_the_analysis({**parameters, 'vivid_track_criteria': additional_preselection}, parameters1, regular, onOtherDataSet, onGoodTracks, yesno).step(get_timeline)
-                if not yesno or not with_voting else factory.get_voting_timeline({**parameters, 'vivid_track_criteria': additional_preselection}, parameters1, regular, onOtherDataSet, onGoodTracks, yesno)
-            ).step(computing_information_transmission_full_3bit_matrix)
-            if not regular else
-            #factory.do_the_analysis(parameters, parameters1, regular, onOtherDataSet, onGoodTracks, yesno).step(get_timeline).step(computing_information_transmission)
-            factory.get_voting_timeline({**parameters, 'vivid_track_criteria': additional_preselection}, parameters1, regular, onOtherDataSet, onGoodTracks, yesno).step(computing_information_transmission)
-        )
+    minutes_per_timepoint = pd.Series({experiment: experiment_manager.theoretical_parameters[experiment]['minutes_per_timepoint'] for experiment in experiments}, name='minutes per timepoint')
+    minutes_per_timepoint.index.name = 'experiment'
+
+    empirical_measures = pd.DataFrame({experiment: chain.load_file('empirical_measures') for experiment,chain in chains.items()}).T
+    empirical_measures.index.name = 'experiment'
+    empirical_measures['mean interval'] = empirical_measures['mean interval'] * minutes_per_timepoint
+    empirical_measures['min interval'] = pd.Series({experiment: experiment_manager.theoretical_parameters[experiment]['min'] for experiment in experiments})
+    empirical_measures['minutes per timepoint'] = minutes_per_timepoint
+
+    empirical_measures['input entropy [bit/h]'] = empirical_measures['input entropy'] * 60 / minutes_per_timepoint 
+    empirical_measures['input entropy assuming independent [bit/h]'] = empirical_measures['input entropy assuming independent'] * 60 / minutes_per_timepoint 
+    empirical_measures['input entropy correction [bit/h]'] = empirical_measures['input entropy assuming independent [bit/h]'] - empirical_measures['input entropy [bit/h]']
+
+    mutual_information_per_track = pd.concat((
+            chain.load_file('mutual_informations_grouped') for chain in chains.values()),
+            names=['experiment'],
+            keys=experiments,
+        ) * 60 / minutes_per_timepoint - empirical_measures['input entropy correction [bit/h]']
+    mutual_information_per_track.name = 'transmitted information [bit/h]'
+    
+    mutual_information_per_track_with_preselection = pd.concat((
+        chain.load_file('mutual_informations_grouped') for chain in chains_with_preselection.values()),
+        names=['experiment'],
+        keys=experiments,
+    ) * 60 / minutes_per_timepoint - empirical_measures['input entropy correction [bit/h]']
+    mutual_information_per_track_with_preselection.name = 'transmitted information [bit/h]'
+
+    print(mutual_information_per_track)
+
+    if regular:
+        mutual_information_per_track = mutual_information_per_track.to_frame().join(minutes_per_timepoint, on='experiment')#.set_index('minutes per timepoint', append=True)['transmitted information [bit/h]']
+        mutual_information_per_track_with_preselection = mutual_information_per_track_with_preselection.to_frame().join(minutes_per_timepoint, on='experiment')#.set_index('minutes per timepoint', append=True)['transmitted information [bit/h]']
+    else:
+        mutual_information_per_track = mutual_information_per_track.to_frame().join(empirical_measures, on='experiment')#.set_index('mean interval', append=True).sort_index(level=['mean interval', 'track_id']).reset_index('mean interval')['transmitted information [bit/h]']
+        mutual_information_per_track_with_preselection = mutual_information_per_track_with_preselection.to_frame().join(empirical_measures, on='experiment')#.set_index('mean interval', append=True).sort_index(level=['mean interval', 'track_id']).reset_index('mean interval')['transmitted information [bit/h]']
 
 
-
-        outputs = {**outputs, experiment:
-            { 
-                **parameters, 
-                **parameters['theoretical_parameters'], 
-                'empirical input period [minutes]': minutes_per_timepoint/chain.load_file('information_overall_empirical')['input_pulses'],
-                'per_track_empirical': chain.load_file('information_per_track_empirical'), 
-                # 'per_track_empirical2': chain2.load_file('information_per_track_empirical'), 
-                'vivid_tracks': chain2.load_file('vivid_tracks'),
-            }}
-    outputs_df = pd.DataFrame(outputs).T
-    outputs_df.index.name = 'experiment'
-    used_n_of_charts = len(outputs_df.groupby(['min', 'exp_mean', 'minutes_per_timepoint']).size()) if regular else len(outputs_df.groupby('experiment'))
+    used_n_of_charts = len(mutual_information_per_track.index.get_level_values('experiment').unique() if not regular else mutual_information_per_track['minutes per timepoint'].unique())
     n_of_charts = used_n_of_charts#len(experiment_manager.chosen_experiments_interval_with_gap)
-    # plt.figure('Fig S1F -- Histograms -- ' + title, figsize=(7,0.6*n_of_charts))
-    fig, ax = plt.subplots(1, used_n_of_charts, num='Fig S1F -- Histograms -- ' + title, figsize=(5,1+0.5*n_of_charts), sharex=True, sharey=False)
-    for it_experiment, (label, equivalent_experiments) in enumerate(outputs_df.sort_values(['minutes_per_timepoint', 'empirical input period [minutes]']).groupby(['minutes_per_timepoint'] if regular else ['experiment'], sort=False)):
-        # print(equivalent_experiments[['minutes_per_timepoint', 'empirical input period [minutes]']])
-        per_track_empirical = pd.concat([outputs[experiment]['per_track_empirical'] for experiment in equivalent_experiments.index])
-        # per_track_empirical2 = pd.concat([outputs[experiment]['per_track_empirical2'] for experiment in equivalent_experiments.index])
-        per_track_empirical_vivid_track = pd.concat([outputs[experiment]['per_track_empirical'].reindex(outputs[experiment]['vivid_tracks']) for experiment in equivalent_experiments.index])
+    fig, ax = plt.subplots(1, used_n_of_charts, num=f'Fig S3{figletter} -- Histograms -- ' + title, figsize=(5,1+0.5*n_of_charts), sharex=True, sharey=False)
+    for it_experiment, ((label, mi_no_preselection), (_, mi_with_preselection))  in enumerate(zip(
+            mutual_information_per_track.groupby(['mean interval', 'min interval'] if not regular else 'minutes per timepoint')['transmitted information [bit/h]'], 
+            mutual_information_per_track_with_preselection.groupby(['mean interval', 'min interval'] if not regular else 'minutes per timepoint')['transmitted information [bit/h]'], 
+            )):
+        print(label)
         plt.subplot(used_n_of_charts, 1, it_experiment+1)
-        per_track_empirical['channel_capacity[b/h]'].plot.hist(bins=np.linspace(-5-0.1, 20-0.1, 26), color='orange')
-        per_track_empirical_vivid_track['channel_capacity[b/h]'].plot.hist(bins=np.linspace(-5-0.1, 20-0.1, 26), color='slateblue')
-        # per_track_empirical2['channel_capacity[b/h]'].plot.hist(bins=np.linspace(-5-0.1, 20-0.1, 26), color='lightblue', histtype='step')
+        mi_no_preselection.plot.hist(bins=np.linspace(-5-0.1, 20-0.1, 26), color='orange')
+        mi_with_preselection.plot.hist(bins=np.linspace(-5-0.1, 20-0.1, 26), color='slateblue')
 
-        plt.ylabel(f"{equivalent_experiments['empirical input period [minutes]'].mean():.0f} [{equivalent_experiments['min'].mean():.0f}] min"
-            # f"${label[0]:.0f}$+Geom(${label[1]:.1f}$)"
-            if not regular else f"{label}", rotation=0, horizontalalignment='left', verticalalignment='center', fontdict=dict(fontweight='bold'), labelpad=74 if not regular else 25, fontsize='large')
-        # plt.ylim(0,300)
+        plt.ylabel(
+            f"{label[0]:.0f} [{label[1]:.0f}] min" if not regular else f"{label}",
+            rotation=0,
+            horizontalalignment='left',
+            verticalalignment='center',
+            fontdict=dict(fontweight='bold'),
+            labelpad=74 if not regular else 25,
+            fontsize='large')
         plt.xlabel('Information transmission rate [bit/h]', fontsize='large')
         plt.yticks([])
         plt.xticks(fontsize='large')
         plt.subplots_adjust(left=0.3, top=(used_n_of_charts+1)/(n_of_charts+2), bottom=1/(n_of_charts+2))#.23
+        # plt.annotate(f"{mi_with_preselection.mean()}", (0,plt.ylim()[1]/2))
     fig.add_subplot(111, frameon=False)
     plt.title(title, fontsize='x-large')
     plt.tick_params(labelcolor='none', which='both', top=False, bottom=False, left=False, right=False)

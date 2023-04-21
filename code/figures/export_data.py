@@ -24,15 +24,15 @@ Q_fields = ['isBlink', 'nuc_area', 'nuc_center_x', 'nuc_center_y', 'nuc_H2B_inte
 
 for group_it,(title, regular, take_tracks, experiments) in enumerate((
 
-    ('binary_encoding', True, 500,
-        experiment_manager.chosen_experiments_pseudorandom,
-    ),
+    # ('binary_encoding', True, 500,
+    #     experiment_manager.chosen_experiments_pseudorandom,
+    # ),
     ('interval_encoding', False, 500,
         experiment_manager.chosen_experiments_interval,
     ),
-    ('interval_encoding_with_minimal_gap', False, 500,
-        experiment_manager.chosen_experiments_interval_with_gap,
-    ),
+    # ('interval_encoding_with_minimal_gap', False, 500,
+    #     experiment_manager.chosen_experiments_interval_with_gap,
+    # ),
     # ('mapk-info-rate-extra-images', False, None,
     #     ['min3_mean30'],
     # ),

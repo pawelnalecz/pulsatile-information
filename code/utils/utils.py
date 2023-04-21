@@ -14,11 +14,11 @@ import re
 from core.step_manager import Chain
 
 
-def complementary_pseudorandom_experiment(experiment):
-    pos_text = re.search('pos[0-9]+_', experiment).group(0)
-    pos = int(pos_text[3:-1])
-    complementary_pos_text = f'pos{11-pos:02d}_'
-    return experiment.replace(pos_text, complementary_pos_text)
+# def complementary_pseudorandom_experiment(experiment):
+#     pos_text = re.search('pos[0-9]+_', experiment).group(0)
+#     pos = int(pos_text[3:-1])
+#     complementary_pos_text = f'pos{11-pos:02d}_'
+#     return experiment.replace(pos_text, complementary_pos_text)
 
 def another_covariant_pseudorandom_experiment(experiment, available_experiments):
     pos_text = re.search('pos[0-9]+_', experiment).group(0)

@@ -1,6 +1,6 @@
 import pandas as pd
 from progressbar import ProgressBar
-from typing import List
+from typing import List, Iterable
 import time
 
 from core.step_manager import AbstractStep, Chain
@@ -10,11 +10,12 @@ flatten = lambda t: [item for sublist in t for item in sublist]
 def is_between(x, low, high):
     return x >= low and x < high
 
+
 class Step(AbstractStep):
 
-    step_name = 'SEregr'
+    step_name = 'SEbr'
 
-    required_parameters = ['slice_length', 'fields_for_learning', 'take_tracks', 'pulse_window_matching_shift', 'trim_start', 'trim_end', 'trim_breaks_longer_than',]
+    required_parameters = ['slice_length', 'target_position', 's_slice_length', 'fields_for_learning', 'take_tracks', 'pulse_window_matching_shift', 'trim_start', 'trim_end', 'trim_breaks_longer_than']
     input_files = ['quantified_tracks', 'blinks', 'previous_pulse_lengths']
     output_files = {'extracted_slices': '.pkl.gz'}
 
@@ -24,8 +25,10 @@ class Step(AbstractStep):
         super().__init__(chain)
 
     def perform(self, **kwargs):
-        print('------ SLICE EXTRACTION FOR REGRESSION ------')
+        print('------ SLICE EXTRACTION (SSLICE) ------')
         slice_length = kwargs['slice_length']
+        target_position = kwargs['target_position']
+        s_slice_length = kwargs['s_slice_length']
         take_tracks = kwargs['take_tracks']
         fields_for_learning = kwargs['fields_for_learning']
         trim_start = kwargs['trim_start']
@@ -38,6 +41,9 @@ class Step(AbstractStep):
         blinks = list(self.load_file('blinks'))
         previous_pulse_lengths = self.load_file('previous_pulse_lengths')
         vivid_tracks = self.load_file('vivid_tracks')
+
+        def binary_sequence_to_int(binary_sequence: Iterable):
+            return sum(v << i for i, v in enumerate(binary_sequence))
 
         if take_tracks is None:
             tracks_to_take =  range(len(quantified_tracks))
@@ -75,7 +81,7 @@ class Step(AbstractStep):
                 'track_id': track_id,
                 'slice_no': slice_no,
                 'flat_data': the_slice.to_numpy().flatten(),
-                'target': slice_no - last_blink[slice_no-pwms],
+                'target': binary_sequence_to_int(slice_no - target_position + i in blinks for i in range(-s_slice_length // 2, (s_slice_length + 1) // 2)),
                 'pulse_no': pulse_no,
             } for track_id in ProgressBar()(sorted(tracks_to_take))
                 for track in (quantified_tracks[track_id],)

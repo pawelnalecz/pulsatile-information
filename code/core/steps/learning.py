@@ -1,83 +1,49 @@
 # learning.py
-from core.step_manager import AbstractStep
+from core.step_manager import AbstractStep, Chain
 import pandas as pd
 
-
+from utils.data_utils import split_data
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.svm import SVC
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.neural_network import MLPClassifier
-from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier, ExtraTreesClassifier
-from sklearn.naive_bayes import GaussianNB
-from sklearn.model_selection import train_test_split
-from sklearn.svm import SVC
 
-
-
-classifiers = { 
-                'kNN (5 neighbors)': KNeighborsClassifier(n_neighbors=5, weights='distance'),  
-                'kNN (10 neighbors)': KNeighborsClassifier(n_neighbors=10, weights='distance'),  
-                'kNN (5 neighbors - no weights)': KNeighborsClassifier(n_neighbors=5),  
-                'kNN (10 neighbors - no weights)': KNeighborsClassifier(n_neighbors=10),  
-                'kNN (20 neighbors - no weights)': KNeighborsClassifier(n_neighbors=20),  
-                'SVM (RBF)': SVC(),
-                'Decision Tree': DecisionTreeClassifier(),
-                'Random Forest': RandomForestClassifier(),
-                'Extra Trees': ExtraTreesClassifier(),
-                'AdaBoost (DecTree)': AdaBoostClassifier(),
-                'Perceptron (20,20)': MLPClassifier(hidden_layer_sizes=(20,20), max_iter=1000),
-                'Naive Bayes': GaussianNB(),
-}
-    
-train_test_split_params = {
-    'test_size': 1./2.,
-    'shuffle': True,
-}
 
 class Step(AbstractStep):
 
     step_name = 'L'
 
-    required_parameters = ['n_iters', 'train_on', 'classifiers']
+    required_parameters = ['n_iters', 'train_on', 'nearest_neighbor_k', 'test_set_size', 'train_on_other_experiment']
     input_files = ['extracted_slices']
-    output_files = {'prediction_results': '.pkl.gz'}#, 'prediction_probas': '.pkl.gz'}
+    output_files = {'prediction_results': '.pkl.gz'}
 
+
+    def __init__(self, chain: Chain) -> None:
+        if chain.parameters['train_on_other_experiment']:
+            self.input_files = self.input_files + ['train_slices']
+        super().__init__(chain)
 
 
     def perform(self, **kwargs):
         print('------LEARNING ------')
         n_iters = kwargs['n_iters']
         train_on = kwargs['train_on']
-        clfs = {clf: classifiers[clf] for clf in kwargs['classifiers']}
-        assert train_on in ('same', 'other_tracks', 'other_pulses', 'other_tracks_and_pulses')
+        nearest_neighbor_k = kwargs['nearest_neighbor_k']
+        test_set_size = kwargs['test_set_size']
+        train_on_other_experiment = kwargs['train_on_other_experiment']
 
+        clfs = {nearest_neighbor_k: KNeighborsClassifier(n_neighbors=nearest_neighbor_k)}
+        assert train_on in ('same', 'other_tracks', 'other_pulses', 'other_tracks_and_pulses')
+        
         slices = self.load_file('extracted_slices')
+        train_data = self.load_file('train_slices') if train_on_other_experiment else slices
 
         results = pd.DataFrame(columns=['track_id', 'slice_no']).set_index(['track_id', 'slice_no'])
         results_list = []
         print('Learning & computing predictions', end='...\n', flush=True)
         for i in range(n_iters):
             print(f'Iteration {str(i)}/{str(n_iters)}:')
-            print('Splitting train and test data', end='...', flush=True)
-            if train_on == 'same':
-                train_slices, test_slices = train_test_split(slices, **train_test_split_params, random_state=i)
-            if train_on == 'other_pulses':
-                train_pulses, test_pulses = train_test_split(slices['pulse_no'].unique(), **train_test_split_params, random_state=i)
-                train_slices = slices[slices['pulse_no'].isin(train_pulses)]
-                test_slices = slices[slices['pulse_no'].isin(test_pulses)]
-            if train_on == 'other_tracks':
-                train_tracks, test_tracks = train_test_split(slices.index.get_level_values('track_id').unique(), **train_test_split_params, random_state=i)
-                train_slices = slices[slices.index.get_level_values('track_id').isin(train_tracks)]
-                test_slices = slices[slices.index.get_level_values('track_id').isin(test_tracks)]
-            if train_on == 'other_tracks_and_pulses':
-                train_tracks, test_tracks = train_test_split(slices.index.get_level_values('track_id').unique(), **train_test_split_params, random_state=i)
-                train_pulses, test_pulses = train_test_split(slices['pulse_no'].unique(), **train_test_split_params, random_state=i)
-                train_slices = slices[slices.index.get_level_values('track_id').isin(train_tracks) & slices['pulse_no'].isin(train_pulses)]
-                test_slices = slices[slices.index.get_level_values('track_id').isin(test_tracks) & slices['pulse_no'].isin(test_pulses)]
-            print('done', flush=True)
+            train_slices, test_slices = split_data(slices, train_data=train_data, train_on=train_on, test_set_size=test_set_size, seed=i)
 
             for clf_name, clf in clfs.items():
-                print(clf_name, ':', end=' ', flush=True)
+                print('Classifier:', clf_name, ':', end=' ', flush=True)
                 print('Learning', end='... ', flush=True)
                 clf.fit(train_slices['flat_data'].to_list(), train_slices['target'].to_list())
                 print('Predicting', end='... ', flush=True)

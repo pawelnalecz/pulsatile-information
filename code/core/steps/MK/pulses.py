@@ -13,7 +13,7 @@ def load_shuttletracker_data(directory, use_cache=True, n_tracks=1000, exclude_t
     import pickle, gzip
     from . import shuttletracker
 
-    assert os.path.isdir(directory)
+    assert os.path.isdir(directory), directory
 
     cache_file_name = qtracks_cache_filename(directory, n_tracks)
     print('file ' + os.path.abspath(cache_file_name) + ' exists? ' +  str(os.path.exists(cache_file_name)))

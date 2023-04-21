@@ -430,6 +430,8 @@ for onPreselected, save_each, overall_figname in (
 
     plt.figure(overall_figname)
     plt.savefig(output_path / overall_figname)
+
+    print(selected_output_fields)
 plt.show()
 
         

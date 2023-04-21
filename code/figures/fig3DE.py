@@ -7,7 +7,6 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 
 from core import experiment_manager, factory
-from core.steps import computing_information_transmission, computing_information_transmission_full_3bit_matrix, get_timeline
 
 from figures.local_config import figure_output_path
 from figures.figure_settings import *
@@ -16,28 +15,30 @@ from utils import utils
 
 check_and_fetch.check_and_fetch_necessary()
 
-output_path = Path(figure_output_path).absolute() / "figS3/automatic/"
+output_path = Path(figure_output_path).absolute() / "fig34"
 output_path.mkdir(parents=True, exist_ok=True)
 
 
-onOtherDataSet = False
-onGoodTracks = False
+
+learning = True
 
 groups = [
-    ([experiment for experiment in experiment_manager.chosen_experiments_interval if experiment in experiment_manager.best_experiments], "Interval encoding", False, "figS1D--interval.svg"),
-    ([experiment for experiment in experiment_manager.chosen_experiments_interval_with_gap if experiment in experiment_manager.best_experiments], "Interval encoding with minimal gap", False, "figS1D--with_gap.svg"),
+    ([experiment for experiment in experiment_manager.chosen_experiments_interval if experiment in experiment_manager.best_experiments], "Interval encoding", False, False, "figS1D--interval.svg"),
+    ([experiment for experiment in experiment_manager.chosen_experiments_interval_with_gap if experiment in experiment_manager.best_experiments], "Interval encoding with minimal gap", False, False, "figS1D--with_gap.svg"),
 ]
 
-for group_it, (experiments, title, regular, figname) in enumerate(groups):
+for group_it, (experiments, title, regular, onOtherDataSet, figname) in enumerate(groups):
     
-    overall_empiricals = pd.DataFrame([])
+    mutual_information = {}
+    mutual_information_std = {}
+    start_times = [-2]
+
 
     for experiment in experiments:
 
-        start_times = [-2]
         for start_time in start_times:#range(-10,7):
             for end_time in range(max(start_time+3, 3), min(start_time+14, 11)):
-                slice_length = end_time - start_time -2
+                slice_length = end_time - start_time - 2
                 t_pos = end_time -1
                 pwms = t_pos-1 #max(t_pos-1, 0)
 
@@ -45,47 +46,62 @@ for group_it, (experiments, title, regular, figname) in enumerate(groups):
                     **experiment_manager.default_parameters,
                     **experiment_manager.experiments[experiment],
                     'theoretical_parameters': experiment_manager.theoretical_parameters[experiment],
+                    'trim_end': experiment_manager.trim_end(experiment),
                     'target_position': t_pos,
                     'slice_length': slice_length,
                     'pulse_window_matching_shift': pwms,
-                    'trim_start' : (1,0) if experiment != 'min3_mean30' else (91,0),
-                    'trim_end': (-1, int(np.floor(experiment_manager.theoretical_parameters[experiment]['min'] + experiment_manager.theoretical_parameters[experiment]['exp_mean']))),
-                        
+                    'correct_consecutive': 1, # should be 2 according to Methods
+                    
+
                     **({
-                        'remove_first_pulses': 0,
-                        'remove_break': 0,
                         'correct_consecutive': 0,
-                        'remove_shorter_than': 0,
-                        'yesno': True,
                         'n_pulses': 19,
                         'pulse_length': experiment_manager.theoretical_parameters[experiment]['minutes_per_timepoint'],
-                        'timeline_extraction_method' :'normal',
-                        'voting_range': [-1,0,1],
-                        'loss_source_determination_method': 'sequential_averaged',
-                        
-                    } if regular else {'correct_consecutive': 2,}),
+                        'train_on_other_experiment': onOtherDataSet,
+                        'r_slice_length': 1,
+                    } if regular else {}),
                 }
 
                 if onOtherDataSet:
-                    parameters1 = {**parameters, **experiment_manager.experiments['min20_optmeanb' if not regular else utils.complementary_pseudorandom_experiment(experiment)] }
+                    complementary_experiment = experiment_manager.get_complementary_experiment(experiment)
+                    parameters1 = {
+                        **parameters,
+                        **experiment_manager.experiments[complementary_experiment],
+                        }
                 else:
-                    parameters1=parameters
+                    parameters1=None
 
                 print(parameters)
                 chain = (
-                    # factory.do_the_analysis(parameters, parameters1, regular, onOtherDataSet, onGoodTracks, regular).
-                    factory.detecting_blink_regr(parameters).step(get_timeline).step(computing_information_transmission_full_3bit_matrix)
-                    if not regular else
-                    factory.get_voting_timeline(parameters, parameters1, regular, onOtherDataSet, onGoodTracks, regular).step(computing_information_transmission)
+                    factory.compute_information_transmission(regular, learning)(parameters, parameters1)
                 )
-                overall_empirical = chain.load_file('information_overall_empirical')
-                overall_empiricals = overall_empiricals.append(pd.DataFrame({ **parameters['theoretical_parameters'], 'experiment': experiment, 'slice_length':slice_length, 'target_position': t_pos, 'start_time':start_time, 'end_time': end_time, **overall_empirical.to_dict()}, index = ((slice_length, t_pos),)))
+                minutes_per_timepoint = parameters['theoretical_parameters']['minutes_per_timepoint']
+                empirical_measures = chain.load_file('empirical_measures')
+                input_information_correction = empirical_measures['input entropy assuming independent']- empirical_measures['input entropy']
+                mutual_information.update({(experiment, start_time, end_time): (chain.load_file('mutual_information') - input_information_correction) * 60 / minutes_per_timepoint})
+                mutual_information_std.update({(experiment, start_time, end_time): np.std(chain.load_file('mutual_informations')) * 60 / minutes_per_timepoint})
+
                 
+    mutual_information_df = pd.Series(mutual_information, name = 'transmitted information [bit/h]')
+    mutual_information_std_df = pd.Series(mutual_information_std, name = 'transmitted information std [bit/h]')
+    mutual_information_df.index.names = ['experiment', 'start time', 'end time']
+    mutual_information_std_df.index.names = ['experiment', 'start time', 'end time']
+    
+    mutual_information_aggregated_df = mutual_information_df.groupby(['start time', 'end time']).mean()
+    mutual_information_std_both_errors_df: pd.Series = np.sqrt(mutual_information_df.groupby(['start time', 'end time']).std() ** 2 + (mutual_information_std_df**2).groupby(['start time', 'end time']).mean())
+    mutual_information_std_both_errors_df.name = 'transmitted information std [bit/h]'
+
+    mutual_information_stdeotm_both_errors_df: pd.Series = mutual_information_std_both_errors_df / np.sqrt(mutual_information_df.groupby(['start time', 'end time']).size())
+    mutual_information_stdeotm_both_errors_df.name = 'transmitted information stdeotm [bit/h]'
+
+
+    print(mutual_information_aggregated_df)
+    print(mutual_information_std_both_errors_df)
+
+
+
+    mi_df = pd.concat([mutual_information_aggregated_df, mutual_information_std_both_errors_df, mutual_information_stdeotm_both_errors_df], axis='columns')
             
-    print(overall_empiricals.set_index(['experiment', 'slice_length', 'target_position']))
-
-    overall_empiricals_per_parameter_set = overall_empiricals.groupby(['minutes_per_timepoint', 'slice_length', 'target_position']).mean().groupby(['slice_length', 'target_position']).mean()
-
         
     plt.figure('vs start time', figsize=(12, 3.5)) #(4*len(groups)+1, 3.5)
     plt.subplot(1, len(groups), group_it+1)
@@ -95,14 +111,23 @@ for group_it, (experiments, title, regular, figname) in enumerate(groups):
     def add_green(tup, green):
         print(tup, green)
         return tup[0:1] + (1-(1-tup[1]) *(1-green),) + tup[2:]
-    for it,((start_time, overall_empirical), pattern) in enumerate(zip(overall_empiricals_per_parameter_set.groupby('start_time'), ('-')*len(start_times))): #, ('-',)*5
-        overall_empirical.plot('end_time', 'channel_capacity[b/h]', label=f"{-int(np.round(start_time)):d}", ax=plt.gca(), ls=pattern, color=add_green(plt.get_cmap('Blues_r')(100 if start_time == -2 else 160), 0.2*(start_time+2))) #plt.get_cmap('Blues_r')(it*23+100)
+    
+    # mutual_information_df.reset_index().plot.scatter('end time', 'transmitted information [bit/h]', ax=plt.gca())
+
+    for (start_time, mis), pattern in zip(mi_df.groupby('start time'), ('-')*len(start_times)): #, ('-',)*5
+        print(mis)
+        # mis.reset_index().plot.line('end time', 'transmitted information [bit/h]', yerr='transmitted information stdeotm [bit/h]', capsize=2, ecolor='k', label=f"{-int(np.round(start_time)):d}", ax=plt.gca(), ls=pattern, color=add_green(plt.get_cmap('Blues_r')(100 if start_time == -2 else 160), 0.2*(start_time+2))) #plt.get_cmap('Blues_r')(it*23+100)
+        mis.reset_index().plot.line('end time', 'transmitted information [bit/h]', label=f"{-int(np.round(start_time)):d}", ax=plt.gca(), ls=pattern, color='slateblue') #plt.get_cmap('Blues_r')(it*23+100)
+    mutual_information_df.reset_index().plot.line('end time', 'transmitted information [bit/h]', ax=plt.gca(), ls='none', marker='o', ms=5, color='none', alpha=0.4, markerfacecolor='b')    
+
     if len(start_times) == 1:
         plt.gca().get_legend().remove()
     else:
         plt.legend(title='Earliest timepoint in window \n[min before slot]', fontsize='large')
 
-    overall_empiricals_per_parameter_set[(overall_empiricals_per_parameter_set.index.get_level_values('slice_length') == 5 ) & (overall_empiricals_per_parameter_set.index.get_level_values('target_position') == 4 )].plot.scatter('end_time', 'channel_capacity[b/h]', ax=plt.gca(), c='None', edgecolors='purple', zorder=2.5)
+
+    #overall_empiricals_per_parameter_set[(overall_empiricals_per_parameter_set.index.get_level_values('slice_length') == 5 ) & (overall_empiricals_per_parameter_set.index.get_level_values('target_position') == 4 )
+    mutual_information_aggregated_df.groupby(['start time', 'end time']).mean().reindex([(-2, 5)]).reset_index().plot.scatter('end time', 'transmitted information [bit/h]', ax=plt.gca(), c='None', edgecolors='purple', zorder=2.5, s=100)
     plt.ylabel('Information transmission rate [bit/h]' if not group_it else '', fontsize='large')
     plt.ylim(0,8) 
 
@@ -123,7 +148,7 @@ for group_it, (experiments, title, regular, figname) in enumerate(groups):
     plt.yticks(fontsize='large')
 
     xlim = plt.xlim()
-    plt.grid(True)
+    plt.grid(True, ls='--')
 
     if len(start_times) == 1:
         plt.twiny()
@@ -134,8 +159,12 @@ for group_it, (experiments, title, regular, figname) in enumerate(groups):
 
 
 
-    plt.savefig(output_path / 'fig3D.svg')
-    
+    plt.savefig(output_path / 'fig3DE.svg')
+
+    print(mi_df)
+    print(mutual_information_df)
+
+
 
 plt.show()
 

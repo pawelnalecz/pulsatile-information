@@ -20,8 +20,8 @@ output_path.mkdir(parents=True, exist_ok=True)
 plt.figure(figsize=(7,4))
 for subplot_no, (title, description, blinks, the_blink, regular) in enumerate(( 
     ('Binary\nencoding', '$\\tau_{clock}$', pd.Series([0, 5, 20, 30, 35, 45, 60, 65]), 2, 5),
-    ('Interval\nencoding', '$\\tau \sim Geom(1/\\tau_{geom})$', pd.Series([0, 6, 27, 30, 48, 56, 60, 69]), 2, False),
-    ('Interval\nencoding\n with gap', '$\\tau \sim \\tau_{gap} + Geom(1/\\tau_{geom})$', pd.Series([2, 19, 35, 49, 68]), 2, False),
+    ('Interval\nencoding', '$\sim Geom(1/\\tau_{geom})$', pd.Series([0, 6, 27, 30, 48, 56, 60, 69]), 2, False),
+    ('Interval\nencoding\n with gap', '$\sim \\tau_{gap} + Geom(1/\\tau_{geom})$', pd.Series([2, 19, 35, 49, 68]), 2, False),
 )):
     plt.subplot(3, 1, subplot_no+1)
 

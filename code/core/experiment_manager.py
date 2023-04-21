@@ -2,6 +2,7 @@
 
 import numpy as np
 from pathlib import Path
+import re
 
 if __name__ == '__main__': import __init__
 
@@ -78,9 +79,9 @@ theoretical_parameters = {
     'min3_mean30_new': {'min': 2, 'exp_mean': 30, 'minutes_per_timepoint': 1},
     'min3_mean40': {'min': 2, 'exp_mean': 50, 'minutes_per_timepoint': 1},#40
     'min3_mean40_new': {'min': 2, 'exp_mean': 40, 'minutes_per_timepoint': 1},
-    'min3_mean50_new': {'min': 2, 'exp_mean': 50, 'minutes_per_timepoint': 1},
-    'min3_mean50_newb': {'min': 2, 'exp_mean': 50, 'minutes_per_timepoint': 1},
-    'min3_mean50_new_NEW_SHUTTLETRACKER': {'min': 2, 'exp_mean': 50, 'minutes_per_timepoint': 1},
+    # 'min3_mean50_new': {'min': 2, 'exp_mean': 50, 'minutes_per_timepoint': 1},
+    # 'min3_mean50_newb': {'min': 2, 'exp_mean': 50, 'minutes_per_timepoint': 1},
+    # 'min3_mean50_new_NEW_SHUTTLETRACKER': {'min': 2, 'exp_mean': 50, 'minutes_per_timepoint': 1},
     'min5_optmean_sept21': {'min': 5, 'exp_mean': 4.506323230388831, 'minutes_per_timepoint': 1}, 
     'min5_optmean_sept21b': {'min': 5, 'exp_mean': 4.506323230388831, 'minutes_per_timepoint': 1}, 
     'min10_optmean': {'min': 10, 'exp_mean': 6.426632937053691, 'minutes_per_timepoint': 1}, # 1/0.155602471208=6.4266331520099085
@@ -146,13 +147,11 @@ def map_to_official_naming(experiment: str):
     experiment = experiment.replace('pseudorandom', 'binary')
 
     return experiment
-
-
+        
 internal_to_official_naming = {experiment: map_to_official_naming(experiment) for experiment in experiments.keys()}
 official_to_internal_naming = {val: key for key,val in internal_to_official_naming.items()}
 
 assert len(internal_to_official_naming) == len(official_to_internal_naming), "Internal to official naming is not unique"
-
 
 def get_official_directory(experiment):
     official_name = internal_to_official_naming[experiment]
@@ -169,26 +168,26 @@ chosen_experiments_pseudorandom = [
 ]
 
 chosen_experiments_interval = [
-    'min3_mean20', 
-    'min3_mean30', 
+    'min3_mean20',
+    'min3_mean30',
     'min3_mean40',
-    'min3_mean20_new', 
-    'min3_mean30_new',  
-    'min3_mean40_new', 
+    'min3_mean20_new',
+    'min3_mean30_new',
+    'min3_mean40_new',
 ]
 
 chosen_experiments_interval_with_gap = [
-    # 'min5_optmean_sept21b', 
+    # 'min5_optmean_sept21b',
     'min10_optmean',
-    'min10_optmean_new', 
-    'min15_optmean', 
-    'min15_optmean_newb', 
-    'min20_optmean', 
+    'min10_optmean_new',
+    'min15_optmean',
+    'min15_optmean_newb',
+    'min20_optmean',
     'min20_optmeanb',
     # 'min20_optmean_new',
-    'min25_optmean_sept21', 
+    'min25_optmean_sept21',
     'min25_optmean_sept21b',
-    'min30_optmean_newb',    
+    'min30_optmean_newb',
 ]
 
 best_experiments = [
@@ -210,37 +209,56 @@ best_experiments = [
 
 ]
 
+best_experiments_new = [
+    'min3_mean20', 
+    'min3_mean30', 
+    'min3_mean20_new', 
+    'min3_mean30_new',  
+
+    'min10_optmean',
+    'min10_optmean_new', 
+    'min15_optmean', 
+    'min15_optmean_newb', 
+    'min20_optmean', 
+    'min20_optmeanb',
+    # 'min20_optmean_new',
+
+    *[ f'pseudorandom_pos{pos:02d}_period{period:d}_new' for pos in range(1,11) for period in [3]],
+    3,
+
+]
+
 default_parameters = {
     'working_directory': experiments['min20_optmean']['working_directory'], # working dir should be the directory where the data is located
-    'directory': experiments['min20_optmean']['directory'],                 # directory where original images were stored; important for pickle naming
+    'directory': experiments['min20_optmean']['directory'],                 # directory where original images were stored; serves as experiment id
     'theoretical_parameters': theoretical_parameters['min20_optmean'],      # assumed theoretical parameters of the inter-spike distribution
-    'n_tracks': 'None',                                                     # number of tracks, selected based on the quality of tracking. Should match the pickle name. 'None' means take all. Note that this default is changed at the end of this file id DATA_SOURCE == 'EXTERNAL'
+    'n_tracks': 'None',                                                     # number of tracks, selected based on the quality of tracking. Should match the pickle name. 'None' means take all. Note that this default is changed at the end of this file if DATA_SOURCE == 'EXTERNAL'
     'vivid_track_criteria': [                                               # criteria for track preselection. (field, method, comparison_method, threshold)
-        ('', 'index', 'lt', 500), 
-        # ('lambda x: pd.Series(x.index)', 'lambda', 'lt', 500),
+        ('', 'index', 'lt', 500),
         ('std_dQ2', 'rank', 'gt', 0.2),
     ],
-    'take_tracks':  'preselected',                                          # limits the number of tracks used. 'preselected' to take all 'vivid' tracks
-    'fields_for_learning': ['dQ3backw'],                                    # quantification methods used for learning. Q1=raw signal, Q2=normalized with image mean, Q3=Q2 normalized with 120min history around the timepoint, Q3backw=Q2 normalized with 120min backward history, Q4=Q2 normailzed with whole history, Q5=gaussian smoothing of Q3backw. Add prefix d for derivative
-    'slice_length': 5,                                                      # number of timepoints used for learning. Note that for derivative, slice_length=k utilizes k finite differences, i.e., (k+1) timepoints in original time series
-    'classifiers': ['kNN (20 neighbors - no weights)'],                                  # classifier used for TAP (time after pulse) prediction
-    'target_position': 4,                                                   # TAP used to predict where the pulse is present
-    'n_iters': 10,                                                          # number of train/test partitionings
-    'train_on': 'other_tracks',                                             # whether to prevent using slices from the same track/same timepoint in train and test sets simultaneously
-    'binary_timeline_threshold': None,                                      # boilerplate, keep equal to None
-    'pulse_window_matching_shift': 3,                                       # minimal TAP used for labeling; time points with TAP < pulse_window_matching_shift are labeled with respect to the previous pulse
+    'take_tracks':  'preselected',                                          # list of indices of tracks to be used in the analysis. Use 'full' to take all tracks and 'preselected' to take all 'vivid' tracks determined in the preselection step
     'trim_start': (1,0),                                                    # (pulse_no, offset). Trim the timeline to start {offset} timepoints after the {pulse_no}th pulse. 
-    'remove_first_pulses': 1,                                               # number of initial pulses to remove from data (first pulse looks other than next ones, and is therefore removed).
-    'remove_break': 240,                                                    # lenght of the break in the middle of the experiment; removed from data
-    'trim_breaks_longer_than': 240,
-    'remove_shorter_than': 2,                                               # remove tracks shorter than {remove_shorter_than} timepoints
-    'yesno': False,                                                         # prediction method: True for binary encoding, False for interval encoding
-    'timeline_extraction_method': 'subsequent',                             # how to make a reconstruction. normal= mark detection wherever TAP is target_position, subsequent = mark detection wherever at least two subsequent TAPs align with (target_position-1, target_position, target_position+1)
+    'trim_breaks_longer_than': 240,                                         # eliminate breaks in the stimulation longer than the given number of timepoints. Used to exclude the 4h break artificially introduced in the middle of (some of) the experiment to allow for cell regeneration
+    'fields_for_learning': ['dQ3backw'],                                    # quantification methods used for reconstruction/entropy estimation. Q1=raw signal, Q2=normalized with image mean, Q3=Q2 normalized with 120min history around the timepoint, Q3backw=Q2 normalized with 120min backward history, Q4=Q2 normailzed with whole history, Q5=gaussian smoothing of Q3backw. Add prefix d for derivative
+    'slice_length': 5,                                                      # number of timepoints used for reconstruction/entropy estimation. Note that for derivative, slice_length=k utilizes k finite differences, i.e., (k+1) timepoints in original time series
+    'target_position': 4,                                                   # time after pulse (TAP), i.e. offset from a time point potentially containing a pulse to the latest point in the slice associated it and u
+    'nearest_neighbor_k': 20,                                               # parameter k of the kNN classifier
+    'n_iters': 10,                                                          # number of train/test partitionings
+    'test_set_size': 0.5,                                                   # fraction of slices in the test set
+    'train_on': 'other_tracks',                                             # whether to prevent using slices from the same track and/or the same timepoint in the train and test sets simultaneously
+    'train_on_other_experiment': False,                                     # whether to train the classisier based on data from a complementary experiment (reconstruction-based approach only)
+    'pulse_window_matching_shift': 3,                                       # minimal TAP used for labeling; time points with TAP < pulse_window_matching_shift are labeled with respect to the previous pulse
     'voting_range': [-1, 0, 1],                                             # TAP offets with respect to target_position to use for voting; used only in binary encoding
+    'voting_threshold': 2,                                                  # number of positive votes to classify a timepoint as containing a pulse
     'correct_consecutive': 2,                                               # force {correct_consecutive} zeros after each 1 in the reconstruction
-    'loss_source_determination_method': 'sequential_averaged',              # how to split information loss between false positives, false negatives, and inaccurate detections
+    'entropy_estimation_method': 'naive_with_MM_correction',                # method of entropy estimation in the reconstruction-free approach
+    'fields_reduced_with_confusion_matrix': ['track_id', 'time_point'],     # dimensions to be reduced in confusion matrix computations
+    's_slice_length': 1,                                                    # length of chunk in the S (signal) sequence used for entropy computation
+    'r_slice_length': 3,                                                    # length of chunk in the R (reconstruction) sequence used for entropy computation
  
-                            
+
+
 }
 
 
@@ -250,4 +268,12 @@ if DATA_SOURCE == 'EXTERNAL':
         experiment['working_directory'] = get_official_directory(experiment_name).parent
     default_parameters['n_tracks'] = '' # This is because data on Zenodo have no appendix. Effectively, '' means 500
     
+
+def get_complementary_experiment(experiment):
+    pos_match = re.search('pos([0-9]+)_', experiment)
+    assert pos_match is not None, f'Position in experiment {experiment} cannot be established'
+    pos = int(pos_match.group(1))
+    complementary_pos_text = f'pos{11-pos:02d}_'
+    print(experiment, pos_match, pos, complementary_pos_text, pos_match.group(0), experiment.replace(pos_match.group(0), complementary_pos_text))
+    return experiment.replace(pos_match.group(0), complementary_pos_text)
 

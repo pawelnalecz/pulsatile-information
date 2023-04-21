@@ -10,11 +10,12 @@ flatten = lambda t: [item for sublist in t for item in sublist]
 def is_between(x, low, high):
     return x >= low and x < high
 
+
 class Step(AbstractStep):
 
-    step_name = 'SEregr'
+    step_name = 'SEb'
 
-    required_parameters = ['slice_length', 'fields_for_learning', 'take_tracks', 'pulse_window_matching_shift', 'trim_start', 'trim_end', 'trim_breaks_longer_than',]
+    required_parameters = ['slice_length', 'target_position', 'fields_for_learning', 'take_tracks', 'pulse_window_matching_shift', 'trim_start', 'trim_end', 'trim_breaks_longer_than']
     input_files = ['quantified_tracks', 'blinks', 'previous_pulse_lengths']
     output_files = {'extracted_slices': '.pkl.gz'}
 
@@ -24,8 +25,9 @@ class Step(AbstractStep):
         super().__init__(chain)
 
     def perform(self, **kwargs):
-        print('------ SLICE EXTRACTION FOR REGRESSION ------')
+        print('------ SLICE EXTRACTION (BINARY) ------')
         slice_length = kwargs['slice_length']
+        target_position = kwargs['target_position']
         take_tracks = kwargs['take_tracks']
         fields_for_learning = kwargs['fields_for_learning']
         trim_start = kwargs['trim_start']
@@ -75,7 +77,7 @@ class Step(AbstractStep):
                 'track_id': track_id,
                 'slice_no': slice_no,
                 'flat_data': the_slice.to_numpy().flatten(),
-                'target': slice_no - last_blink[slice_no-pwms],
+                'target': (slice_no - target_position) in blinks,
                 'pulse_no': pulse_no,
             } for track_id in ProgressBar()(sorted(tracks_to_take))
                 for track in (quantified_tracks[track_id],)

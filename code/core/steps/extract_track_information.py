@@ -43,8 +43,8 @@ class Step(AbstractStep):
             'max_minus_min_Q3backw': (track['Q3backw'].rolling(60).max() - track['Q3backw'].rolling(60).min()).mean(),
             'max_minus_min_Q2': (track['Q2'].rolling(60).max() - track['Q2'].rolling(60).min()).mean(),
             'first_blink_max_minus_min_Q3backw': (lambda x: x.max()-x.min())(track['Q3'].reindex(range(blinks[0]-30, blinks[1]))),
-            'first_blink_Q2': track['Q2'][blinks[0]:blinks[0]+30].mean() - track['Q2'][blinks[0]-30:blinks[0]].mean(),
-            'first_blink_Q3': track['Q3'][blinks[0]:blinks[0]+30].mean() - track['Q3'][blinks[0]-30:blinks[0]].mean(),
+            'first_blink_Q2': track['Q2'].reindex(range(blinks[0], blinks[0]+30)).mean() - track['Q2'].reindex(range(blinks[0]-30, blinks[0])).mean(),
+            'first_blink_Q3': track['Q3'].reindex(range(blinks[0], blinks[0]+30)).mean() - track['Q3'].reindex(range(blinks[0]-30, blinks[0])).mean(),
             #  'a_long_blink_Q2': track['Q2'][blinks[a_long_blink]:blinks[a_long_blink]+20].mean() - track['Q2'][blinks[a_long_blink]-20:blinks[a_long_blink]].mean(),
             #  'a_long_blink_Q3backw': track['Q3backw'][blinks[a_long_blink]:blinks[a_long_blink]+20].mean() - track['Q3backw'][blinks[a_long_blink]-20:blinks[a_long_blink]].mean(),
             }
