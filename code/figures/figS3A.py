@@ -81,7 +81,7 @@ for group_it,(title, figname, regular, onOtherDataSet, experiments, additional_p
     def get_chain(experiment, regular, onOtherDataSet, vivid_track_offset):
         parameters = get_parameters(experiment, regular, onOtherDataSet, vivid_track_offset=vivid_track_offset)
         parameters1 = get_complementary_parameters(parameters, experiment) if parameters['train_on_other_experiment'] else None
-        chain = factory.compute_information_transmission(regular=regular, learning=learning)(parameters=parameters, parameters1=parameters1) #(prepare_slices_periodic if regular else prepare_slices_binary_with_sslice if parameters['s_slice_length'] > 1 else prepare_slices_binary)(parameters).step(MI_computation_discrete) if not learning else (compute_information_transmission_using_reconstruction_periodic(parameters) if regular else compute_information_transmission_using_reconstruction(parameters))
+        chain = factory.compute_information_transmission(regular=regular, learning=learning)(parameters=parameters, parameters1=parameters1)
         return chain
         
 
