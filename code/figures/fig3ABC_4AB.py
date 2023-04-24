@@ -43,7 +43,7 @@ for learning, slice_length, tpos, figname in (
                 'n_pulses': 19,
                 'pulse_length': experiment_manager.theoretical_parameters[experiment]['minutes_per_timepoint'],
                 'r_slice_length': 1,
-                'train_on_other_experiment': False,# should be True according to Methods
+                'train_on_other_experiment': False,# should be equal to learning according to Methods
             } if regular else {}),
             **kwargs,
         }
@@ -60,7 +60,7 @@ for learning, slice_length, tpos, figname in (
     def get_chain(experiment, regular, learning):
         parameters = get_parameters(experiment, regular, learning)
         parameters1 = get_complementary_parameters(parameters, experiment) if parameters['train_on_other_experiment'] else None
-        chain = compute_information_transmission(regular=regular, learning=learning)(parameters=parameters, parameters1=parameters1) #(prepare_slices_periodic if regular else prepare_slices_binary_with_sslice if parameters['s_slice_length'] > 1 else prepare_slices_binary)(parameters).step(MI_computation_discrete) if not learning else (compute_information_transmission_using_reconstruction_periodic(parameters) if regular else compute_information_transmission_using_reconstruction(parameters))
+        chain = compute_information_transmission(regular=regular, learning=learning)(parameters=parameters, parameters1=parameters1)
         return chain
         
 

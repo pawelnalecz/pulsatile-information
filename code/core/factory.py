@@ -119,6 +119,7 @@ def prepare_for_voting(previous_stage: Callable[..., step_manager.Chain], parame
 
 def compute_information_transmission_directly(parameters=default_parameters, parameters1=None, cache_directory=cache_directory):
     assert parameters1 is None
+    assert parameters['train_on_other_experiment'] is False
     prepare_slices = prepare_slices_binary if parameters['s_slice_length'] == 1 else prepare_slices_binary_with_sslice
     chain = prepare_slices(parameters=parameters, cache_directory=cache_directory) \
         .step(MI_computation_discrete) \
@@ -128,6 +129,7 @@ def compute_information_transmission_directly(parameters=default_parameters, par
 
 def compute_information_transmission_directly_periodic(parameters=default_parameters, parameters1=None, cache_directory=cache_directory):
     assert parameters1 is None
+    assert parameters['train_on_other_experiment'] is False
     chain = prepare_slices_periodic(parameters=parameters, cache_directory=cache_directory) \
         .step(MI_computation_discrete) \
         .step(extract_empirical_measures_sslices)
