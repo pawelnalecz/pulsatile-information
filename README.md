@@ -9,7 +9,7 @@ Quick usage guide:
 
 => To create a figure, run the proper script from 'code/figures' directory.
 To do this, open your terminal, change directory to the 'code' directory 
-next to which you found this readMe, and type 'python figures/fig1B.py'.
+next to which you found this readMe, and type 'python code/figures/fig1B.py'.
 	
 => Figures will be stored in a location specified in 
 'code/figures/local_config.py'.
@@ -31,7 +31,7 @@ the images will be automatically downloaded and stored to directory specified by
 Again, you can download the data manually from 
 https://pmbm.ippt.pan.pl/data/mapk-info-rate-extra-images.zip (108MB)
 
-=> If you want to recreate the data set published on Zenodo, run 'figures/export_data.py'.
+=> If you want to recreate the data set published on Zenodo, run 'code/figures/export_data.py'.
 
 => The scripts cache partial results in '_analysis_cache' folder 
 which will make a rerun (significantly) faster.
