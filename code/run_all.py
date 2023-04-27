@@ -2,6 +2,9 @@ import subprocess as sp
 from pathlib import Path
 from time import sleep
 
+from integrity import check_and_fetch
+
+
 my_dir = Path(__file__).parent
 
 workers = 9
@@ -18,6 +21,9 @@ scripts = [
     'figS3BCD.py',
 ]
 
+
+check_and_fetch.check_and_fetch_necessary(requires_fig1cd_package=True)
+
 def run_script(script):
     print(f'Running {script}')
     return sp.Popen(['python', str(my_dir / 'figures' / script)], shell=True)
@@ -25,11 +31,11 @@ def run_script(script):
 def get_run_script(script):
     return lambda: run_script(script)
 
+
 jobs = []
 
 for script in scripts:
     jobs.append(get_run_script(script))
-
 
 
 workers_free = workers

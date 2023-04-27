@@ -8,11 +8,13 @@ Available under BSD-3 licence.
 Quick usage guide:
 
 => To create a figure, run the proper script from 'code/figures' directory.
-To do this, open your terminal, change directory to the 'code' directory 
-next to which you found this readMe, and type 'python code/figures/fig1B.py'.
+To do this, open your terminal, change directory to the directory containing
+this readMe, and type 'python code/figures/<figname>.py'. 
+Alternatively, you create all images at once by running 'code/run_all.py'. 
+Note that this option uses several threads and requires >24h of computation time.
 	
-=> Figures will be stored in a location specified in 
-'code/figures/local_config.py'.
+=> By default, figures will be stored in the 'figures' directory.
+You can change the output directory in 'code/figures/local_config.py'. 
 
 => The figures need data. The scripts can use either of the two data sets:
 * EXTERNAL: Compact package published on Zenodo: https://doi.org/10.5281/zenodo.7808385 (default) (724MB)
