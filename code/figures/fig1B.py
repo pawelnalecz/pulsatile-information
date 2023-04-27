@@ -12,12 +12,12 @@ from integrity import check_and_fetch
 
 check_and_fetch.check_and_fetch_necessary()
 
-output_path = Path(figure_output_path).absolute() / "fig1/automatic/"
+output_path = Path(figure_output_path).absolute() / "fig1"
 output_path.mkdir(parents=True, exist_ok=True)
 
+figname = 'fig1B'
 
-
-plt.figure(figsize=(7,4))
+plt.figure(figname, figsize=(7,4))
 for subplot_no, (title, description, blinks, the_blink, regular) in enumerate(( 
     ('Binary\nencoding', '$\\tau_{clock}$', pd.Series([0, 5, 20, 30, 35, 45, 60, 65]), 2, 5),
     ('Interval\nencoding', '$\sim Geom(1/\\tau_{geom})$', pd.Series([0, 6, 27, 30, 48, 56, 60, 69]), 2, False),
@@ -67,7 +67,7 @@ for subplot_no, (title, description, blinks, the_blink, regular) in enumerate((
 plt.subplots_adjust(hspace=1, top=0.85)
 
 plt.annotate("A", xy=(0.02,.98), xycoords='figure fraction', fontsize='xx-large', verticalalignment='top', fontweight='bold')
-plt.savefig(output_path / 'fig1B.svg')
+plt.savefig(output_path / f'{figname}.svg')
 
 
 plt.show()

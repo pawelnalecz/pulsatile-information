@@ -72,7 +72,7 @@ draw_contour = draw_contour_gen(chain)
 Ns = neighboring_cells
 timepoints = range(-1, 15, 1)#range(-1, 23, 1)
 rows=2#3
-plt.figure(figsize=(1.25 * len(timepoints) / rows, 1.5 + rows))
+plt.figure('fig1C', figsize=(1.25 * len(timepoints) / rows, 1.5 + rows))
 for i,T in enumerate(timepoints):
     plt.subplot(rows, int(np.ceil(len(timepoints)/rows)), i+1)
     x0,y0 = show_cell(N, blinks[pulse_no] + T, channels=[channel], norm_quantiles=(.1,.9), window_half_size=60, shift_in_time=onset)
@@ -102,7 +102,7 @@ plt.savefig(output_path / 'fig1C.svg')
 Q = chain.load_file('raw_tracks')
 assert all(track_id < len(Q) for track_id in Ns), f"To generate fig 1D, all cells must be present in the raw track file" + (". Try switching DATA_SOURCE to 'INTERNAL' in core.local_config" if DATA_SOURCE == 'EXTERNAL' else '')
 
-plt.figure(figsize=(10,4))
+plt.figure('fig1D', figsize=(10,4))
 
 xlim  = (blinks[pulse_no-1]-2, blinks[pulse_no+1]+30)
 

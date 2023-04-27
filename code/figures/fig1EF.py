@@ -79,7 +79,7 @@ def plot_field(field, label, offset, color, xticks):
 
 
 
-plt.figure(figsize=(3,3.8))
+plt.figure('fig1E', figsize=(3,3.8))
 
 print('Max translocation', end='... ', flush=True)
 plt.subplot(3, 1, 1)
@@ -125,7 +125,7 @@ def get_detection_TAP(experiment, pwms):
 
 detections = pd.concat([get_detection_TAP(experiment, pwms=2) for experiment in experiments], keys=experiments, names=['experiments'])
 
-plt.figure(figsize=(3,1.4))
+plt.figure('fig1F', figsize=(3,1.4))
 detections.plot.hist(bins=np.array(range(-20, 20))-0.5, density=True, alpha=0.6)
 plt.gca().spines['top'].set(visible=False)
 plt.gca().spines['right'].set(visible=False)
@@ -145,8 +145,8 @@ plt.savefig(output_path / 'fig1F.svg')
 
 print(detections)
 
-plt.figure()
-detections.dropna().groupby(['track_id', 'pulse_no']).size().reindex(pulse_info.index).fillna(0).plot.hist(bins=range(-1, 10), density=True)
+# plt.figure()
+# detections.dropna().groupby(['track_id', 'pulse_no']).size().reindex(pulse_info.index).fillna(0).plot.hist(bins=range(-1, 10), density=True)
 
 plt.show()
 

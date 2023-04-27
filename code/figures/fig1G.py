@@ -57,7 +57,7 @@ def get_detection_TAP(experiment):
 detections_per_experiment_and_pulse = pd.concat([get_detection_TAP(experiment) for experiment in experiments], keys=experiments, names=['experiment'])   
 print(detections_per_experiment_and_pulse)
 
-plt.figure(figsize=(7,5.2))
+plt.figure('fig1G', figsize=(7,5.2))
 
 detections_per_ppl = detections_per_experiment_and_pulse.groupby('previous_pulse_length').mean()
 (lambda x: x[['on time', ' ', '1 min too early', '1 min too late', '2 min too early', '2 min too late']]\

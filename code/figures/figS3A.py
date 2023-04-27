@@ -126,7 +126,7 @@ for group_it,(title, figname, regular, onOtherDataSet, experiments, additional_p
     mi_per_vivid_track = pd.DataFrame({vivid_track_offset: get_average_mi_for_group(experiments, regular, onOtherDataSet, vivid_track_offset) for vivid_track_offset in np.linspace(0, .5, 6)}).T
         
      
-    plt.figure('fig S3A', figsize=(5+1,3.5))
+    plt.figure('figS3A', figsize=(5+1,3.5))
     color_list = [ 'maroon', 'purple',  'slateblue']
     symbol_list = ['^', 's', 'o']
     

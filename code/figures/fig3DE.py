@@ -23,11 +23,11 @@ output_path.mkdir(parents=True, exist_ok=True)
 learning = True
 
 groups = [
-    ([experiment for experiment in experiment_manager.chosen_experiments_interval if experiment in experiment_manager.best_experiments], "Interval encoding", False, False, "figS1D--interval.svg"),
-    ([experiment for experiment in experiment_manager.chosen_experiments_interval_with_gap if experiment in experiment_manager.best_experiments], "Interval encoding with minimal gap", False, False, "figS1D--with_gap.svg"),
+    ([experiment for experiment in experiment_manager.chosen_experiments_interval if experiment in experiment_manager.best_experiments], "Interval encoding", False, False),
+    ([experiment for experiment in experiment_manager.chosen_experiments_interval_with_gap if experiment in experiment_manager.best_experiments], "Interval encoding with minimal gap", False, False),
 ]
 
-for group_it, (experiments, title, regular, onOtherDataSet, figname) in enumerate(groups):
+for group_it, (experiments, title, regular, onOtherDataSet) in enumerate(groups):
     
     mutual_information = {}
     mutual_information_std = {}
@@ -103,7 +103,7 @@ for group_it, (experiments, title, regular, onOtherDataSet, figname) in enumerat
     mi_df = pd.concat([mutual_information_aggregated_df, mutual_information_std_both_errors_df, mutual_information_stdeotm_both_errors_df], axis='columns')
             
         
-    plt.figure('vs start time', figsize=(12, 3.5)) #(4*len(groups)+1, 3.5)
+    plt.figure('fig3DE', figsize=(12, 3.5)) #(4*len(groups)+1, 3.5)
     plt.subplot(1, len(groups), group_it+1)
     def add_red(tup, red):
         print(tup, red)

@@ -55,7 +55,7 @@ for experiment, start_pulse, end_pulse, regular, filename, figletter in (
 
     xlim  = (potential_blinks[start_pulse]-5, potential_blinks[end_pulse]+20)
 
-    plt.figure(figsize=(9,3.5))
+    plt.figure(f'fig2{figletter}', figsize=(9,3.5))
     representative_tracks = range(40,50) if experiment != 'min3_mean30_new' else range(50,60)
     for track_id in representative_tracks:
         (1-quantified_tracks[track_id]['Q3backw'])[xlim[0]:xlim[1]].plot(alpha=0.3)
@@ -141,22 +141,22 @@ for experiment, start_pulse, end_pulse, regular, filename, figletter in (
     plt.annotate(figletter, xy=(0.02,.98), xycoords='figure fraction', fontsize='xx-large', verticalalignment='top', fontweight='bold')
     plt.savefig(output_path / filename)
 
-    plt.figure(figsize=(10,2.5))
-    plt.vlines(blinks[blinks.isin(range(xlim[0],xlim[1]))], 0, 1)
-    for blink,previous_pulse_length in zip(potential_blinks, previous_pulse_lengths if not regular else [np.nan] + [minutes_per_timepoint]*(len(potential_blinks)-1)):
-        if blink < xlim[0] or blink >= xlim[1]:
-            continue
-        plt.annotate(f'{previous_pulse_length:.0f}', (blink-previous_pulse_length/2,0.6 + 0.02), fontweight='bold', horizontalalignment='center', verticalalignment='bottom', fontsize='small')
-        plt.plot(potential_blinks, [0.6+0.02]*len(potential_blinks), c='k', marker='|', lw=0.3, ms=2)
-    plt.xlim(xlim)
-    plt.xticks(fontsize='large')
-    plt.xlabel('time [min]', fontsize='large')
-    plt.ylim((0,1.25))
-    plt.yticks([])
-    plt.ylabel('Light stimulation', fontsize='large')
-    plt.subplots_adjust(bottom=0.25)
+    # plt.figure(figsize=(10,2.5))
+    # plt.vlines(blinks[blinks.isin(range(xlim[0],xlim[1]))], 0, 1)
+    # for blink,previous_pulse_length in zip(potential_blinks, previous_pulse_lengths if not regular else [np.nan] + [minutes_per_timepoint]*(len(potential_blinks)-1)):
+    #     if blink < xlim[0] or blink >= xlim[1]:
+    #         continue
+    #     plt.annotate(f'{previous_pulse_length:.0f}', (blink-previous_pulse_length/2,0.6 + 0.02), fontweight='bold', horizontalalignment='center', verticalalignment='bottom', fontsize='small')
+    #     plt.plot(potential_blinks, [0.6+0.02]*len(potential_blinks), c='k', marker='|', lw=0.3, ms=2)
+    # plt.xlim(xlim)
+    # plt.xticks(fontsize='large')
+    # plt.xlabel('time [min]', fontsize='large')
+    # plt.ylim((0,1.25))
+    # plt.yticks([])
+    # plt.ylabel('Light stimulation', fontsize='large')
+    # plt.subplots_adjust(bottom=0.25)
     
-    plt.savefig(output_path / (filename[:-4] + '-blinks' + filename[-4:]))
+    # plt.savefig(output_path / (filename[:-4] + '-blinks' + filename[-4:]))
 
 
 
