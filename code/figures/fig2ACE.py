@@ -20,10 +20,10 @@ output_path.mkdir(parents=True, exist_ok=True)
 
 
 
-for experiment, start_pulse, end_pulse, regular, filename, figletter in ( 
-    ('min3_mean30', 96, 116,  False, 'fig2C.svg', 'C'),
-    ('min20_optmean', 6, 22,  False, 'fig2E.svg', 'E'),
-    ('pseudorandom_pos01_period10_new', 0, 18,  True, 'fig2A.svg', 'A'),
+for experiment, start_pulse, end_pulse, regular, onOtherDataSet, filename, figletter in ( 
+    ('min3_mean30', 96, 116,  False, False, 'fig2C.svg', 'C'),
+    ('min20_optmean', 6, 22,  False, False, 'fig2E.svg', 'E'),
+    ('pseudorandom_pos01_period10_new', 0, 18,  True, True, 'fig2A.svg', 'A'),
 ):
 
 
@@ -40,12 +40,22 @@ for experiment, start_pulse, end_pulse, regular, filename, figletter in (
             'n_pulses': 19,
             'pulse_length': minutes_per_timepoint,
             'r_slice_length': 1,
-            'train_on_other_experiment': False, # should be True accordint to Methods
+            'train_on_other_experiment': True, # should be True accordint to Methods
         } if regular else {}),
     }
 
+    if onOtherDataSet:
+        complementary_experiment = experiment_manager.get_complementary_experiment(experiment)
+        complementary_parameters = {
+            **parameters,
+            **experiment_manager.experiments[complementary_experiment],
+            'theoretical_parameters': experiment_manager.theoretical_parameters[complementary_experiment],
+            'trim_end': experiment_manager.trim_end(complementary_experiment),
+            }
+    else:
+        complementary_parameters = None
 
-    chain = factory.compute_information_transmission(regular=regular, learning=True)(parameters=parameters)
+    chain = factory.compute_information_transmission(regular=regular, learning=True)(parameters=parameters, parameters1=complementary_parameters)
 
     blinks: pd.Series = chain.load_file('blinks')
     quantified_tracks = chain.load_file('quantified_tracks')

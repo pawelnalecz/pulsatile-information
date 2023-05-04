@@ -27,7 +27,7 @@ learning = True
 
 for group_it,(title, figname, regular, onOtherDataSet, experiments, additional_parameters) in enumerate((
 
-    ('Interval encoding with a minimal gap', 'fig4B.svg', False, False,  # onOtherDataSet should be True according to Methods
+    ('Interval encoding with a minimal gap', 'fig4B.svg', False, False,  
            [experiment for experiment in experiment_manager.chosen_experiments_interval_with_gap if experiment in experiment_manager.best_experiments],
         {},
     ),
@@ -36,7 +36,7 @@ for group_it,(title, figname, regular, onOtherDataSet, experiments, additional_p
 
         {},
     ),
-    ('Binary encoding', 'fig2B.svg', True, False,
+    ('Binary encoding', 'fig2B.svg', True, True, # onOtherDataSet should be True according to Methods
         [experiment for experiment in experiment_manager.chosen_experiments_pseudorandom if experiment in experiment_manager.best_experiments],
         {},
     ),

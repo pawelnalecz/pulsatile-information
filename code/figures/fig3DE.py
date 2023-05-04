@@ -50,7 +50,7 @@ for group_it, (experiments, title, regular, onOtherDataSet) in enumerate(groups)
                     'target_position': t_pos,
                     'slice_length': slice_length,
                     'pulse_window_matching_shift': pwms,
-                    'correct_consecutive': 1, # should be 2 according to Methods
+                    'correct_consecutive': 2, # should be 2 according to Methods
                     
 
                     **({

@@ -7,3 +7,4 @@ from pathlib import Path
 # figure_output_path = Path(__file__).parent.parent.parent / 'figures'
 figure_output_path = Path('Z:/panaj/Bern') / 'figures'
 figure_output_path = Path('C:/Users/pawna/Documents/Projekty/Bern/EXPORT') / 'figures'
+figure_output_path = Path('C:/Users/pawna/Documents/Projekty/Bern/Figures/PLOS_revision_updated/') / 'figures'

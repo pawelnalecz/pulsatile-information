@@ -35,7 +35,7 @@ for learning, slice_length, tpos, figname in (
             'trim_end': experiment_manager.trim_end(experiment),
             'slice_length': slice_length,
             'target_position': tpos,
-            'correct_consecutive': 1, # should be 2 according to Methods
+            'correct_consecutive': 2, # should be 2 according to Methods
             
 
             **({
@@ -43,7 +43,7 @@ for learning, slice_length, tpos, figname in (
                 'n_pulses': 19,
                 'pulse_length': experiment_manager.theoretical_parameters[experiment]['minutes_per_timepoint'],
                 'r_slice_length': 1,
-                'train_on_other_experiment': False,# should be equal to learning according to Methods
+                'train_on_other_experiment': learning,#False,# should be equal to learning according to Methods
             } if regular else {}),
             **kwargs,
         }

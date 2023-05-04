@@ -39,7 +39,7 @@ xaxis_to_xlim = {
 
 for group_it,(title, figname, figletter, figletter_overall_figure, xaxis, regular, onOtherDataSet, experiments, additional_parameters) in enumerate((
     
-    ('Binary encoding', 'fig2B.svg', 'B', 'A', 'minutes_per_timepoint', True, False, # onOtherDataSet should be True accoring to Methods
+    ('Binary encoding', 'fig2B.svg', 'B', 'A', 'minutes_per_timepoint', True, True, # onOtherDataSet should be True accoring to Methods
         experiment_manager.chosen_experiments_pseudorandom,
     {},
     ),
