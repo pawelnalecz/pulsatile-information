@@ -23,7 +23,7 @@ learning = True
 
 for group_it,(title, figletter, xaxis, regular, onOtherDataSet, experiments, additional_parameters) in enumerate((
     
-    ('Binary encoding', 'B', 'minutes_per_timepoint', True, False,
+    ('Binary encoding', 'B', 'minutes_per_timepoint', True, True,
         experiment_manager.chosen_experiments_pseudorandom,
     {},
     ),

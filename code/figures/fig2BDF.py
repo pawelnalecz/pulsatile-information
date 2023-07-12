@@ -172,7 +172,7 @@ for group_it,(title, figname, figletter, figletter_overall_figure, xaxis, regula
     ]].plot.bar(stacked=True, figsize=(4.5,3.5), color=['k', (0., 178/256, 178/256), (87/256, 123/256, 255/256), (189/256, 0., 189/256)], ax=plt.gca())#color=cm.get_cmap('tab10')([0, 1, 3, 2]))#['blue', 'lightskyblue', 'olivedrab', 'lightsalmon']
     plt.ylim(0,26)
     plt.yticks(fontsize=fontsize)
-    plt.ylabel('Information transmission rate [bit/h]', fontsize=fontsize)
+    plt.ylabel('Information rate [bit/h]', fontsize=fontsize)
 
 
     if title == 'Binary encoding':

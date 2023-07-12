@@ -43,7 +43,7 @@ for learning, slice_length, tpos, figname in (
                 'n_pulses': 19,
                 'pulse_length': experiment_manager.theoretical_parameters[experiment]['minutes_per_timepoint'],
                 'r_slice_length': 1,
-                'train_on_other_experiment': learning,#False,# should be equal to learning according to Methods
+                'train_on_other_experiment': learning,#False,#learning,#False,# should be equal to learning according to Methods
             } if regular else {}),
             **kwargs,
         }
@@ -190,4 +190,5 @@ for learning, slice_length, tpos, figname in (
 
     plt.figure(figname)
     plt.savefig(output_path / (figname + '.svg'))
+    pd.DataFrame({'mean': best_experiment_mis, 'stdeotm': best_experiment_mi_stdeotm}).to_html(output_path / (figname + '.html'), float_format="{:.2f}".format)
 plt.show()

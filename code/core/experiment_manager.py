@@ -202,8 +202,8 @@ best_experiments = [
     # 'min20_optmean_new',
 
     *[ f'pseudorandom_pos{pos:02d}_period{period:d}' for pos in range(1,11) for period in [5, 7]],
-    *[ f'pseudorandom_pos{pos:02d}_period{period:d}_new' for pos in range(1,11) for period in [3]],
-    3,
+    # *[ f'pseudorandom_pos{pos:02d}_period{period:d}_new' for pos in range(1,11) for period in [3]],
+    # 3,
     5,
     7,
 

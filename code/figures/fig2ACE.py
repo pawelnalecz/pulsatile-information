@@ -23,7 +23,7 @@ output_path.mkdir(parents=True, exist_ok=True)
 for experiment, start_pulse, end_pulse, regular, onOtherDataSet, filename, figletter in ( 
     ('min3_mean30', 96, 116,  False, False, 'fig2C.svg', 'C'),
     ('min20_optmean', 6, 22,  False, False, 'fig2E.svg', 'E'),
-    ('pseudorandom_pos01_period10_new', 0, 18,  True, True, 'fig2A.svg', 'A'),
+    ('pseudorandom_pos01_period10_new', 0, 18,  True, True, 'fig2A.svg', 'A'), # onOtherDataSet should be True according to Methods
 ):
 
 
@@ -40,7 +40,7 @@ for experiment, start_pulse, end_pulse, regular, onOtherDataSet, filename, figle
             'n_pulses': 19,
             'pulse_length': minutes_per_timepoint,
             'r_slice_length': 1,
-            'train_on_other_experiment': True, # should be True accordint to Methods
+            'train_on_other_experiment': onOtherDataSet, 
         } if regular else {}),
     }
 
@@ -128,7 +128,8 @@ for experiment, start_pulse, end_pulse, regular, onOtherDataSet, filename, figle
         verticalalignment = 'bottom'
         color = 'green' if (time_point in blinks.to_list()) else 'grey' if regular else 'none'
         rotation = 0
-        ax2.annotate(f"{100*row['y_pred']:.0f}%", (time_point, row['y_pred']), horizontalalignment=horizontalalignment, verticalalignment=verticalalignment, rotation=rotation, fontsize='small', color=color)
+        decimal_points = 0 if not color == 'grey' else 0
+        ax2.annotate(f"{100*row['y_pred']:.{decimal_points}f}%", (time_point, row['y_pred']), horizontalalignment=horizontalalignment, verticalalignment=verticalalignment, rotation=rotation, fontsize='small', color=color)
 
 
     plt.plot(*zip(*[(x, 1.1 - 0.01) for x in blinks[blinks.isin(range(*xlim))]]), ls='none', marker='v', color='dodgerblue', ms='6')

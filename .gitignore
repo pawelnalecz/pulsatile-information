@@ -7,7 +7,7 @@ data
 _analysis_cache
 
 
-./code/core/local_config.py
-./code/figures/local_config.py
-code/core/local_config.py
-code/figures/local_config.py
+# ./code/core/local_config.py
+# ./code/figures/local_config.py
+# code/core/local_config.py
+# code/figures/local_config.py
